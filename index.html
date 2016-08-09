@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NodeJSChatApp</title>
+    <link rel="stylesheet" type="text/css" href="index.css">
+</head>
+<body>
+    <div class="chatbox">
+        <div id="nameholder"><input type="text" class="nametextbox" placeholder="Enter your name..."></div>
+        <div class="messagesbox">
+            <div class="recdMessage"></div>
+            <div class="sentMessage"></div>
+        </div>
+        <div id="newmessagebox"><textarea class="newmessages" placeholder="Type your message..."></textarea></div>
+        <div class="status">Status: <span>Idle</span></div>
+    </div><!--chatbox-->
+
+   <script src="http://127.0.0.1:8080/socket.io/socket.io.js"></script>
+    <script>
+
+        (function(){
+
+            var getNode= function(s){
+                return document.querySelector(s);
+            };
+            var textarea=getNode('.newmessages');
+            var chatname=getNode('.nametextbox');
+            var textarea2=getNode('.recdMessage');
+
+            try{
+                var socket=io.connect('http://127.0.0.1:8080');
+            }catch(e){
+
+                console.log('IO Connection Error');
+            }
+
+            if(socket!== undefined){
+
+                //Get all previous messages.
+                socket.on('output',function(data){
+
+
+                    if(data.length){
+                        for(var x=0;x<data.length;x=x+1) {
+                            console.log(x);
+                            var message = document.createElement('div');
+                            message.setAttribute('class','recdMessage');
+
+                            message.textContent= data[x].name+":"+data[x].message;
+                            textarea2.appendChild(message);
+                          //  textarea2.insertBefore(message,textarea2.firstChild);
+                        }
+                    }
+                });
+
+                socket.on('newusermessage',function(data){
+                    console.log('new mess');
+                    var message = document.createElement('div');
+                    message.setAttribute('class','recdMessage');
+
+                    message.textContent= data.name+":"+data.message+"\n";
+
+                    textarea2.appendChild(message);
+
+                   // textarea2.insertBefore(message,textarea2.firstChild);
+                });
+
+                textarea.addEventListener('keydown',function(event){
+                    var self=this;
+                    var name= chatname.value;
+
+                    if(event.which===13 && event.shiftKey===false){
+
+                        socket.emit('input',{name:name,message:self.value});
+                        self.value='';
+                        chatname.value='';
+                    }
+
+                });
+            }
+
+        })();
+
+    </script>
+</body>
+</html>
